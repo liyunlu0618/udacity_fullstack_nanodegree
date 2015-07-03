@@ -4,37 +4,39 @@
 #
 
 import psycopg2
-import bleach
 
-
-def connect():
+def connect(database_name = "tournament"):
     """Connect to the PostgreSQL database.  Returns a database connection."""
-    return psycopg2.connect("dbname=tournament")
-
+    try:
+        conn = psycopg2.connect("dbname={}".format(database_name))
+        cursor = conn.cursor()
+        return conn, cursor
+    except:
+        print "Failed to connect to database %s" % database_name
 
 def deleteMatches():
     """Remove all the match records from the database."""
-    conn = connect()
-    c = conn.cursor()
-    c.execute("delete from matches;")
+    conn, c = connect()
+    query = "truncate matches;"
+    c.execute(query)
     conn.commit();
     conn.close();
 
 
 def deletePlayers():
     """Remove all the player records from the database."""
-    conn = connect()
-    c = conn.cursor()
-    c.execute("delete from players;")
+    conn, c = connect()
+    query = "truncate players cascade;"
+    c.execute(query)
     conn.commit()
     conn.close()
 
 
 def countPlayers():
     """Returns the number of players currently registered."""
-    conn = connect()
-    c = conn.cursor()
-    c.execute("select count(*) from players;")
+    conn, c = connect()
+    query = "select count(*) from players;"
+    c.execute(query)
     rows = c.fetchall()
     (num,) = rows[0]
     conn.commit()
@@ -53,9 +55,10 @@ def registerPlayer(name):
       name: the player's full name (need not be unique).
     """
 
-    conn = connect()
-    c = conn.cursor()
-    c.execute("insert into players (name) values (%s)", (name,))
+    conn, c = connect()
+    query = "insert into players (name) values (%s)"
+    param = (name,)
+    c.execute(query, param)
     conn.commit()
     conn.close()
 
@@ -93,8 +96,7 @@ def playerStandings():
     on winners.id = losers.id
     """.format(win = win_query, lose = lose_query)
     
-    conn = connect()
-    c = conn.cursor()
+    conn, c = connect()
     c.execute(query)
     results = c.fetchall()
 
@@ -109,9 +111,10 @@ def reportMatch(winner, loser):
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
     """
-    conn = connect()
-    c = conn.cursor()
-    c.execute("insert into matches (winner_id, loser_id) values (%s, %s)", (winner, loser))
+    conn, c = connect()
+    query = "insert into matches (winner_id, loser_id) values (%s, %s)"
+    param = (winner, loser)
+    c.execute(query, param)
     conn.commit()
     c.close()
  
@@ -136,9 +139,10 @@ def swissPairings():
     if len(standings) < 2:
         raise KeyError("Not enough players.")
 
-    results = []
-    for i in xrange(0, len(standings), 2):
-        results.append((standings[i][0], standings[i][1], standings[i + 1][0], \
-            standings[i + 1][1]))
+    left = standings[0::2]
+    right = standings[1::2]
+    pairings = zip(left, right)
+
+    results = [sum(pairing, ()) for pairing in pairings]
 
     return results
