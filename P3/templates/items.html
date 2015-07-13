@@ -1,0 +1,83 @@
+{% extends "main.html" %}
+{% block content %}
+{% include "header.html" %}
+
+<br><br>
+<div class = 'flash'>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}  
+        <ul>
+        {% for message in messages %}
+            <li> <strong> {{ message }} </strong> </li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+    {% endwith %}
+
+</div>
+
+<div class="row banner main">
+    <div class="col-md-1"></div>
+    <div class="col-md-5 padding-none">
+        <h1>Categories</h1>
+    </div>
+    <div class="col-md-5 padding-none">
+        <h1>{{ category.name + " Movies"}}</h1>
+    </div>
+</div>
+
+<div class="row" style="position:absolute; left:360px; width:200px">
+{% for category in categories %}
+    <a href = "{{url_for('showItems', category_id = category.id)}}">
+      <div class="row">
+        <div class="col-md-1"></div>
+          <div class="col-md-10 padding-none restaurant-list">
+            <h3>{{category.name}}</h3>
+          </div>
+        <div class="col-md-1"></div>
+    </div>
+    </a>
+{% endfor %}
+<div class="row padding-top padding-bottom">
+    <div class="col-md-1"></div>
+    <div class="col-md-10 padding-none">
+        <a href="{{url_for('newCategory')}}">
+        <button class="btn btn-default" id="new-category">
+            <span class="glyphicon glyphicon-film" aria-hidden="true"></span>Add Category
+        </button>
+        </a>
+    </div>
+    <div class="col-md-1"></div>
+</div>
+</div>
+
+<div style="position:relative; left:500px; width:1000px">
+{% if items != [] %}
+{% for item in items %}
+<a href = "{{url_for('showItem', category_id = item.category_id, item_id = item.id)}}">
+  <div class="row">
+    <div class="col-md-1"></div>
+      <div class="col-md-6 padding-none restaurant-list">
+        <h3>{{item.name}}</h3>
+          </div>
+        <div class="col-md-1"></div>
+  </div>
+</a>
+{% endfor %}
+{% else %}
+<h2 style="position:relative; left:70px; width:1000px">No items in this category</h2>
+{% endif %}
+<div class="row padding-top padding-bottom">
+    <div class="col-md-1"></div>
+    <div class="col-md-10 padding-none">
+        <a href="{{url_for('newItem', category_id = category.id)}}">
+        <button class="btn btn-default" id="new-category">
+            <span class="glyphicon glyphicon-film" aria-hidden="true"></span>Add Item
+        </button>
+        </a>
+    </div>
+    <div class="col-md-1"></div>
+</div>
+</div>
+
+{% endblock %}
