@@ -10,6 +10,7 @@ import httplib2
 import json
 from flask import make_response
 import requests
+import time
 
 app = Flask(__name__)
 
@@ -224,12 +225,20 @@ def newCategory():
         loggedin = True
     if not loggedin:
         return redirect(url_for('showLogin'))
+
+    categories = session.query(Category).all()
+    names = [c.name for c in categories]
+
     if request.method == 'POST':
         if request.form['name']:
-            newCategory = Category(name = request.form['name'])
-            session.add(newCategory)
-            session.commit()
-            flash("New category %s successfully created!" % newCategory.name)
+            if request.form['name'] in names:
+                flash("Category %s already exists!" % request.form['name'])
+                return redirect(url_for('newCategory'))
+            else:
+                newCategory = Category(name = request.form['name'])
+                session.add(newCategory)
+                session.commit()
+                flash("New category %s successfully created!" % newCategory.name)
         return redirect(url_for('showCategories'))
     else:
         return render_template('new_category.html', loggedin = loggedin)
