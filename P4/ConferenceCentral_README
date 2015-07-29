@@ -1,0 +1,51 @@
+The project implements features listed in the rubric doc. App id is ivory-streamer-101306
+
+Task 1:
+==============================
+1. Session is implemented as a kind, and speaker is implemented as a simple string. Please refer
+to models.py for details.
+
+2. The following endpoints API methods are implemented for this task:
+getConferenceSessions
+getConferenceSessionsByType
+getSessionsBySpeaker
+createSession
+
+3. The Conference kind is the ancestor of Session kind.
+
+
+Task 2:
+==============================
+1. Similar to the way conference created is implemented, added a sessionKeysInterested property
+in the Profile kind to store keys of sessions user are interested in.
+
+
+Task 3:
+==============================
+1. The query problem is solved by the following endpoints API method:
+querySpecificSessions
+
+Since there're two inequality filters, they cannot be applied at the same time. To resolve the
+issue, applied one filter first and then filtered the result returned in memory.
+
+2. A generic method querySessions() is implemented to execute other querys. Similar to method
+queryConference(), it could apply multiple filters. For example:
+
+a) Session start time no earlier than 10am: startTime <= 10
+b) Search sessions in a paticular city, eg. London: city == 'London'
+
+
+Task 4:
+==============================
+1. Added two string arrays in Conference, speakers and featured
+
+a) speakers stores any speaker has a session in this conference
+b) featured stores speakers have more than one session in this conference
+
+When a session is added to the conference, check whether speaker is in 'speakers' first. If no,
+add him/her to 'speakers'. If yes, it means he/she has more than one sessions. Add name and
+session to memcache, and check whether the speaker is in 'featured'. If not, add him/her to
+'featured' as well.
+
+2. The getFeaturedSpeaker() method just retrieves the featured list and returns it in the correct
+form.
