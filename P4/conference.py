@@ -54,10 +54,10 @@ from utils import getUserId
 EMAIL_SCOPE = endpoints.EMAIL_SCOPE
 API_EXPLORER_CLIENT_ID = endpoints.API_EXPLORER_CLIENT_ID
 MEMCACHE_ANNOUNCEMENTS_KEY = "RECENT_ANNOUNCEMENTS"
-MEMCACHE_SPEAKER_KEY = "FEATURED_SPEAKER"
-MEMCACHE_SESSION_KEY = "SESSION_NAME"
+MEMCACHE_SPEAKER_KEY = "FEATURED_SPEAKER_AND_SESSIONS"
 ANNOUNCEMENT_TPL = ('Last chance to attend! The following conferences '
                     'are nearly sold out: %s')
+SPEAKER_TPL = ('The speaker %s has the following sessions: %s')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 DEFAULTS = {
@@ -277,22 +277,6 @@ class ConferenceApi(remote.Service):
         if speaker:
             setattr(sp, 'name', speaker)
         return sp
-
-    @endpoints.method(CONF_GET_REQUEST, FeaturedSpeakers,
-            path='conference/{websafeConferenceKey}/featuredspeakers',
-            http_method='GET', name='getFeaturedSpeaker')
-    def getFeaturedSpeaker(self, request):
-        """Return featured speakers (by websafeConferenceKey)."""
-        # get Conference object from request; bail if not found
-        conf = ndb.Key(urlsafe=request.websafeConferenceKey).get()
-        if not conf:
-            raise endpoints.NotFoundException(
-                'No conference found with key: %s' % request.websafeConferenceKey)
-
-        return FeaturedSpeakers(
-                items=[self._setSpeakers(speaker) for speaker in conf.featured]
-            )
-
 
     @endpoints.method(message_types.VoidMessage, ConferenceForms,
             path='getConferencesCreated',
@@ -680,14 +664,17 @@ class ConferenceApi(remote.Service):
         session.put()
 
         #conf.speakers hold speakers have session in this conference
-        #conf.featured hold speakers have more than one sessions in this conference
         if session.speaker:
             if session.speaker in conf.speakers:
-                memcache.set(MEMCACHE_SPEAKER_KEY, session.speaker)
-                memcache.set(MEMCACHE_SESSION_KEY, session.name)
-                if session.speaker not in conf.featured:
-                    conf.featured.append(session.speaker)
-                    conf.put()
+                sessions = Session.query(ancestor=ndb.Key(urlsafe=request.websafeConferenceKey))
+                sessions = sessions.filter(Session.speaker == session.speaker).fetch(projection=[Session.name])
+
+                entry = SPEAKER_TPL % (session.speaker, ', '.join(s.name for s in sessions))
+            
+                taskqueue.add(params={'speaker': session.speaker,
+                    'content': entry},
+                    url='/tasks/cache_featured_speaker'
+                )
             else:
                 conf.speakers.append(data['speaker'])
                 conf.put()
@@ -874,6 +861,24 @@ class ConferenceApi(remote.Service):
                 items=[self._copySessionToForm(session) for session in sessions]
             )
 
+# - - - Featured Speakers - - - - - - - - - - - - - - - - - - - -
+
+    @staticmethod
+    def _cacheFeaturedSpeaker(speaker, entry):
+        """Cache featured speakers and his/her sessions
+        """
+                
+        memcache.set(MEMCACHE_SPEAKER_KEY, entry)
+
+        return entry
+
+
+    @endpoints.method(message_types.VoidMessage, StringMessage,
+            path='conference/featured_speaker/get',
+            http_method='GET', name='getFeaturedSpeaker')
+    def getFeaturedSpeaker(self, request):
+        """Return Announcement from memcache."""
+        return StringMessage(data=memcache.get(MEMCACHE_SPEAKER_KEY) or "")
 
 
 api = endpoints.api_server([ConferenceApi]) # register API

@@ -37,15 +37,11 @@ b) Search sessions in a paticular city, eg. London: city == 'London'
 
 Task 4:
 ==============================
-1. Added two string arrays in Conference, speakers and featured
+1. Added a string array in Conference, speakers, which stores any speaker has a session in this
+conference.
 
-a) speakers stores any speaker has a session in this conference
-b) featured stores speakers have more than one session in this conference
+When a session is added to the conference, check whether speaker is in 'speakers' list. If no,
+add him/her to 'speakers'. If yes, it means he/she has more than one sessions. Add a task to the
+default task queue to cache the speaker's name and sessions he hosts into memcache.
 
-When a session is added to the conference, check whether speaker is in 'speakers' first. If no,
-add him/her to 'speakers'. If yes, it means he/she has more than one sessions. Add name and
-session to memcache, and check whether the speaker is in 'featured'. If not, add him/her to
-'featured' as well.
-
-2. The getFeaturedSpeaker() method just retrieves the featured list and returns it in the correct
-form.
+2. The getFeaturedSpeaker() method just retrieves the newly added entry from memcache.

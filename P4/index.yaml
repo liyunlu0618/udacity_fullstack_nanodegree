@@ -110,3 +110,14 @@ indexes:
   - name: city
   - name: speaker
   - name: name
+
+- kind: Session
+  ancestor: yes
+  properties:
+  - name: speaker
+  - name: name
+
+- kind: Session
+  properties:
+  - name: speaker
+  - name: name

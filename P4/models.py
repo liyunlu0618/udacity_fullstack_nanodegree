@@ -63,7 +63,6 @@ class Conference(ndb.Model):
     maxAttendees    = ndb.IntegerProperty()
     seatsAvailable  = ndb.IntegerProperty()
     speakers        = ndb.StringProperty(repeated=True)
-    featured        = ndb.StringProperty(repeated=True)
 
 class ConferenceForm(messages.Message):
     """ConferenceForm -- Conference outbound form message"""
@@ -80,7 +79,6 @@ class ConferenceForm(messages.Message):
     websafeKey      = messages.StringField(11)
     organizerDisplayName = messages.StringField(12)
     speakers        = messages.StringField(13, repeated=True)
-    featured        = messages.StringField(14, repeated=True)
 
 class ConferenceForms(messages.Message):
     """ConferenceForms -- multiple Conference outbound form message"""
